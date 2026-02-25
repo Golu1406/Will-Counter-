@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Will Counter</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+  body {
+    background: #121212;
+    color: white;
+    font-family: Arial;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+  .progress {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: conic-gradient(#00ffcc 0deg, #333 0deg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .circle-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .timer {
+    font-size: 26px;
+    font-weight: bold;
+  }
+  
+  .days {
+    font-size: 18px;
+    margin-top: 10px;
+    opacity: 0.8;
+  }
+  
+  button {
+    margin-top: 15px;
+    padding: 10px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background: #00ffcc;
+    cursor: pointer;
+  }
+
+  ul {
+    margin-top: 15px;
+    max-width: 300px;
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="progress" id="progress">
+  <div class="circle-content">
+    <div class="timer" id="timer">00:00:00</div>
+    <div class="days" id="days">0 Days</div>
+  </div>
+</div>
+  
+  
+  <!-- ONE BUTTON -->
+  <button id="mainBtn" onclick="toggleTimer()">Start</button>
+
+  <h3>History</h3>
+  <ul id="history"></ul>
+
+<script>
+
+  let seconds = 0;
+  let interval = null;
+  let running = false;
+  
+  let days = localStorage.getItem("days") ? parseInt(localStorage.getItem("days")) : 0;
+  let history = JSON.parse(localStorage.getItem("history")) || [];
+  
+  const btn = document.getElementById("mainBtn");
+  
+  document.getElementById("days").innerText = days + " Days";
+  renderHistory();
+  updateUI();
+  
+  function toggleTimer() {
+      if (!running) {
+          startTimer();
+      } else {
+          resetTimer();
+      }
+  }
+  
+  function startTimer() {
+      running = true;
+      btn.innerText = "Reset";
+  
+      interval = setInterval(() => {
+  
+          seconds++;
+  
+          if (seconds >= 86400) {
+              seconds = 0;
+              days++;
+  
+              localStorage.setItem("days", days);
+              document.getElementById("days").innerText = days + " Days";
+          }
+  
+          updateUI();
+  
+      }, 1000);
+  }
+  
+  function resetTimer() {
+  
+      if (seconds > 0 || days > 0) {
+  
+          let hrs = Math.floor(seconds / 3600);
+          let mins = Math.floor((seconds % 3600) / 60);
+          let secs = seconds % 60;
+  
+          let record =
+              "Session: " +
+              String(hrs).padStart(2, "0") + ":" +
+              String(mins).padStart(2, "0") + ":" +
+              String(secs).padStart(2, "0") +
+              " | Total Days: " + days +
+              " | " + new Date().toLocaleString();
+  
+          history.unshift(record);
+  
+          localStorage.setItem("history", JSON.stringify(history));
+      }
+  
+      running = false;
+      btn.innerText = "Start";
+  
+      clearInterval(interval);
+      interval = null;
+  
+      seconds = 0;
+      updateUI();
+      renderHistory();
+  }
+  
+  function updateUI() {
+  
+      let hrs = Math.floor(seconds / 3600);
+      let mins = Math.floor((seconds % 3600) / 60);
+      let secs = seconds % 60;
+  
+      document.getElementById("timer").innerText =
+          String(hrs).padStart(2, "0") + ":" +
+          String(mins).padStart(2, "0") + ":" +
+          String(secs).padStart(2, "0");
+  
+      let degree = (seconds / 86400) * 360;
+      document.getElementById("progress").style.background =
+          `conic-gradient(#00ffcc ${degree}deg, #333 ${degree}deg)`;
+  }
+  
+  function renderHistory() {
+      let list = document.getElementById("history");
+      list.innerHTML = "";
+  
+      if (history.length === 0) {
+          list.innerHTML = "<li>No history yet</li>";
+          return;
+      }
+  
+      history.forEach(item => {
+          let li = document.createElement("li");
+          li.innerText = item;
+          list.appendChild(li);
+      });
+  }
+
+</script>
+
+</body>
+</html>
